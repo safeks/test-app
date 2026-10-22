@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { FilterTabs } from '../components/FilterTabs';
 import { MatchCard } from '../components/MatchCard';
+import { UpdatedAgo } from '../components/UpdatedAgo';
 import { useFavorites } from '../hooks/useFavorites';
 import { useMatches } from '../hooks/useMatches';
 import { filterMatches, type MatchFilter } from '../utils/match';
@@ -14,7 +15,8 @@ const EMPTY_MESSAGES: Record<MatchFilter, string> = {
 
 // Экран «Матчи тура» — задание в README.md, часть 1.
 export function MatchesScreen() {
-  const { matches, round, error, isLoading, retry } = useMatches();
+  const { matches, round, updatedAt, error, isLoading, isRefreshing, retry, refresh } =
+    useMatches();
   const { favorites, isFavorite, toggle } = useFavorites();
   const [filter, setFilter] = useState<MatchFilter>('all');
 
@@ -63,6 +65,19 @@ export function MatchesScreen() {
 
     return (
       <>
+        <View style={styles.toolbar}>
+          {updatedAt && <UpdatedAgo since={updatedAt} />}
+          <Pressable
+            onPress={refresh}
+            disabled={isRefreshing}
+            accessibilityRole="button"
+            hitSlop={8}
+          >
+            <Text style={[styles.refresh, isRefreshing && styles.refreshDisabled]}>
+              {isRefreshing ? 'Обновляем…' : 'Обновить'}
+            </Text>
+          </Pressable>
+        </View>
         {error && <Text style={styles.errorBanner}>Не удалось обновить: {error}</Text>}
         <FilterTabs value={filter} counts={counts} onChange={setFilter} />
         <FlatList
@@ -79,6 +94,9 @@ export function MatchesScreen() {
           )}
           ItemSeparatorComponent={() => <View style={styles.separator} />}
           ListEmptyComponent={<Text style={styles.message}>{EMPTY_MESSAGES[filter]}</Text>}
+          // Pull-to-refresh на телефоне; в браузере его нет — там кнопка «Обновить».
+          refreshing={isRefreshing}
+          onRefresh={refresh}
           style={styles.list}
           contentContainerStyle={visibleMatches.length === 0 && styles.center}
         />
@@ -121,6 +139,20 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#fff',
     fontWeight: '600',
+  },
+  toolbar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  refresh: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#ef3124',
+  },
+  refreshDisabled: {
+    color: '#9ca3af',
   },
   list: {
     marginTop: 12,
