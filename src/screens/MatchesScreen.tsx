@@ -1,4 +1,5 @@
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { MatchCard } from '../components/MatchCard';
 import { useMatches } from '../hooks/useMatches';
 
 // Экран «Матчи тура» — задание в README.md, часть 1.
@@ -40,11 +41,8 @@ export function MatchesScreen() {
         <FlatList
           data={matches}
           keyExtractor={(match) => match.id}
-          renderItem={({ item }) => (
-            <Text>
-              {item.home.name} — {item.away.name}
-            </Text>
-          )}
+          renderItem={({ item }) => <MatchCard match={item} />}
+          ItemSeparatorComponent={() => <View style={styles.separator} />}
           ListEmptyComponent={<Text style={styles.message}>Матчей нет</Text>}
           contentContainerStyle={matches.length === 0 && styles.center}
         />
@@ -87,6 +85,9 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#fff',
     fontWeight: '600',
+  },
+  separator: {
+    height: 8,
   },
   errorBanner: {
     marginBottom: 8,
