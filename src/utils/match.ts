@@ -11,6 +11,29 @@ function isKnownStatus(status: string): status is MatchStatus {
   return status in STATUS_LABELS;
 }
 
+export type MatchFilter = 'all' | 'upcoming' | 'finished';
+export type MatchGroup = Exclude<MatchFilter, 'all'>;
+
+// «Завершённые» — только матчи с окончательным результатом.
+// «Предстоящие» — всё, что ещё будет сыграно или идёт сейчас:
+// идущий (live) и перенесённый (postponed) матчи в том числе.
+// Неизвестный статус не относим ни к одной группе — такой матч виден только во «Все».
+const STATUS_GROUPS: Record<MatchStatus, MatchGroup> = {
+  scheduled: 'upcoming',
+  live: 'upcoming',
+  postponed: 'upcoming',
+  finished: 'finished',
+};
+
+export function getMatchGroup(status: string): MatchGroup | null {
+  return isKnownStatus(status) ? STATUS_GROUPS[status] : null;
+}
+
+export function filterMatches(matches: Match[], filter: MatchFilter): Match[] {
+  if (filter === 'all') return matches;
+  return matches.filter((match) => getMatchGroup(match.status) === filter);
+}
+
 export function getStatusLabel(match: Match): string {
   if (!isKnownStatus(match.status)) return 'Статус неизвестен';
   const label = STATUS_LABELS[match.status];

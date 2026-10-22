@@ -1,10 +1,34 @@
+import { useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { FilterTabs } from '../components/FilterTabs';
 import { MatchCard } from '../components/MatchCard';
 import { useMatches } from '../hooks/useMatches';
+import { filterMatches, type MatchFilter } from '../utils/match';
+
+const EMPTY_MESSAGES: Record<MatchFilter, string> = {
+  all: 'В этом туре пока нет матчей',
+  upcoming: 'Предстоящих матчей нет',
+  finished: 'Завершённых матчей пока нет',
+};
 
 // Экран «Матчи тура» — задание в README.md, часть 1.
 export function MatchesScreen() {
   const { matches, round, error, isLoading, retry } = useMatches();
+  const [filter, setFilter] = useState<MatchFilter>('all');
+
+  const visibleMatches = useMemo(
+    () => (matches === null ? [] : filterMatches(matches, filter)),
+    [matches, filter],
+  );
+
+  const counts = useMemo<Record<MatchFilter, number>>(() => {
+    const list = matches ?? [];
+    return {
+      all: list.length,
+      upcoming: filterMatches(list, 'upcoming').length,
+      finished: filterMatches(list, 'finished').length,
+    };
+  }, [matches]);
 
   const title = round === null ? 'Матчи тура' : `Матчи ${round}-го тура`;
 
@@ -38,13 +62,15 @@ export function MatchesScreen() {
     return (
       <>
         {error && <Text style={styles.errorBanner}>Не удалось обновить: {error}</Text>}
+        <FilterTabs value={filter} counts={counts} onChange={setFilter} />
         <FlatList
-          data={matches}
+          data={visibleMatches}
           keyExtractor={(match) => match.id}
           renderItem={({ item }) => <MatchCard match={item} />}
           ItemSeparatorComponent={() => <View style={styles.separator} />}
-          ListEmptyComponent={<Text style={styles.message}>Матчей нет</Text>}
-          contentContainerStyle={matches.length === 0 && styles.center}
+          ListEmptyComponent={<Text style={styles.message}>{EMPTY_MESSAGES[filter]}</Text>}
+          style={styles.list}
+          contentContainerStyle={visibleMatches.length === 0 && styles.center}
         />
       </>
     );
@@ -85,6 +111,9 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#fff',
     fontWeight: '600',
+  },
+  list: {
+    marginTop: 12,
   },
   separator: {
     height: 8,
