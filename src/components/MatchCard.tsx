@@ -1,12 +1,15 @@
 import { StyleSheet, Text, View } from 'react-native';
 import type { Match } from '../types/match';
 import { formatScore, formatStartsAt, getStatusLabel } from '../utils/match';
+import { FavoriteButton } from './FavoriteButton';
 
 type Props = {
   match: Match;
+  isFavorite: boolean;
+  onToggleFavorite: () => void;
 };
 
-export function MatchCard({ match }: Props) {
+export function MatchCard({ match, isFavorite, onToggleFavorite }: Props) {
   const isLive = match.status === 'live';
 
   return (
@@ -14,6 +17,7 @@ export function MatchCard({ match }: Props) {
       <View style={styles.header}>
         <Text style={styles.date}>{formatStartsAt(match.startsAt)}</Text>
         <Text style={[styles.status, isLive && styles.live]}>{getStatusLabel(match)}</Text>
+        <FavoriteButton active={isFavorite} onPress={onToggleFavorite} />
       </View>
       <View style={styles.teams}>
         <Text style={[styles.team, styles.home]} numberOfLines={2}>
@@ -39,10 +43,11 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    alignItems: 'center',
     gap: 8,
   },
   date: {
+    flex: 1,
     fontSize: 13,
     color: '#6b7280',
   },

@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { FilterTabs } from '../components/FilterTabs';
 import { MatchCard } from '../components/MatchCard';
+import { useFavorites } from '../hooks/useFavorites';
 import { useMatches } from '../hooks/useMatches';
 import { filterMatches, type MatchFilter } from '../utils/match';
 
@@ -14,6 +15,7 @@ const EMPTY_MESSAGES: Record<MatchFilter, string> = {
 // Экран «Матчи тура» — задание в README.md, часть 1.
 export function MatchesScreen() {
   const { matches, round, error, isLoading, retry } = useMatches();
+  const { favorites, isFavorite, toggle } = useFavorites();
   const [filter, setFilter] = useState<MatchFilter>('all');
 
   const visibleMatches = useMemo(
@@ -66,7 +68,15 @@ export function MatchesScreen() {
         <FlatList
           data={visibleMatches}
           keyExtractor={(match) => match.id}
-          renderItem={({ item }) => <MatchCard match={item} />}
+          // FlatList перерисовывает строки только при смене data или extraData.
+          extraData={favorites}
+          renderItem={({ item }) => (
+            <MatchCard
+              match={item}
+              isFavorite={isFavorite(item.id)}
+              onToggleFavorite={() => toggle(item.id)}
+            />
+          )}
           ItemSeparatorComponent={() => <View style={styles.separator} />}
           ListEmptyComponent={<Text style={styles.message}>{EMPTY_MESSAGES[filter]}</Text>}
           style={styles.list}
